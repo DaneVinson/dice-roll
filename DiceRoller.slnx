@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Dice.Api.Tests/Dice.Api.Tests.fsproj" />
+  <Project Path="Dice.Api/Dice.Api.fsproj" />
+</Solution>
