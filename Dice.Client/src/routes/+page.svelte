@@ -5,6 +5,12 @@
 
 <script lang="ts">
   import { rollDice } from '$lib/api/dice';
+  import {
+    formatLiveLogEntry,
+    formatResultLabel,
+    getResultsGrid,
+    getResultsTotal
+  } from '$lib/roll-utils';
 
   const diceSides = [4, 6, 8, 10, 12, 20];
   const quickCounts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -24,28 +30,12 @@
   let liveLog: string[] = [];
   let isLoading = false;
   let error = '';
+  let resultCols = 1;
+  let resultRows = 0;
 
-  $: lastRollLabel =
-    lastRollSides === 100 ? 'd%' : `${lastRollCount}d${lastRollSides}`;
-  $: lastRollTotal = results.reduce((sum, value) => sum + value, 0);
-  $: resultCols = Math.min(Math.ceil(Math.sqrt(results.length)), 10) || 1;
-  $: resultRows = Math.ceil(results.length / resultCols);
-
-  function formatTime(date: Date) {
-    const hour = String(date.getHours()).padStart(2, '0');
-    const minute = String(date.getMinutes()).padStart(2, '0');
-    const second = String(date.getSeconds()).padStart(2, '0');
-
-    return `${hour}:${minute}:${second}`;
-  }
-
-  function formatResultLabel(count: number, sides: number) {
-    if (sides === 100) {
-      return 'd%';
-    }
-
-    return `${count}d${sides}`;
-  }
+  $: lastRollLabel = formatResultLabel(lastRollCount, lastRollSides);
+  $: lastRollTotal = getResultsTotal(results);
+  $: ({ cols: resultCols, rows: resultRows } = getResultsGrid(results.length));
 
   async function rollForSides(count: number, sides: number) {
     if (isLoading) {
@@ -57,14 +47,12 @@
 
     try {
       const fetchedResults = await rollDice(count, sides);
-      const timeText = formatTime(new Date());
-      const resultText = formatResultLabel(count, sides);
-      const valueText = `[${fetchedResults.join(', ')}]`;
+      const logEntry = formatLiveLogEntry(new Date(), count, sides, fetchedResults);
 
       results = fetchedResults;
       lastRollCount = count;
       lastRollSides = sides;
-      liveLog = [`${timeText} ${resultText} ${valueText}`, ...liveLog];
+      liveLog = [logEntry, ...liveLog];
       selectedCounts = {
         ...selectedCounts,
         [sides]: 1

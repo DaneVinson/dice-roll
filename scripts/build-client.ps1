@@ -1,3 +1,7 @@
+param(
+    [switch]$RunUnitTests
+)
+
 $ErrorActionPreference = 'Stop'
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -25,6 +29,14 @@ try {
     & $npm.Source install
     if ($LASTEXITCODE -ne 0) {
         throw 'npm install failed for Dice.Client.'
+    }
+
+    if ($RunUnitTests) {
+        Write-Host 'Running Dice.Client unit tests...'
+        & $npm.Source run test:unit
+        if ($LASTEXITCODE -ne 0) {
+            throw 'npm run test:unit failed for Dice.Client.'
+        }
     }
 
     & $npm.Source run build
