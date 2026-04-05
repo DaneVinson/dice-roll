@@ -50,3 +50,8 @@ Examples:
 
 - Generated client assets are not committed.
 - Dice.Api/wwwroot/index.html is a placeholder until the SvelteKit build is copied in.
+
+## Infrastructure
+
+- A minimal Azure Bicep setup lives under `infrastructure/`.
+- See `infrastructure/README.md` for provisioning commands and parameter file guidance.
