@@ -27,6 +27,8 @@
   $: lastRollLabel =
     lastRollSides === 100 ? 'd%' : `${lastRollCount}d${lastRollSides}`;
   $: lastRollTotal = results.reduce((sum, value) => sum + value, 0);
+  $: resultCols = Math.min(Math.ceil(Math.sqrt(results.length)), 10) || 1;
+  $: resultRows = Math.ceil(results.length / resultCols);
 
   async function rollForSides(count: number, sides: number) {
     if (isLoading) {
@@ -40,6 +42,10 @@
       results = await rollDice(count, sides);
       lastRollCount = count;
       lastRollSides = sides;
+      selectedCounts = {
+        ...selectedCounts,
+        [sides]: 1
+      };
     } catch (err) {
       error = err instanceof Error ? err.message : 'Unknown error calling Dice API.';
     } finally {
@@ -78,7 +84,6 @@
   <section class="controls" aria-label="Dice controls">
     {#each diceSides as sides}
       <label>
-        <img src="/d{sides}.svg" alt="d{sides}" class="dice-icon" />
         <div class="split-control">
           <button
             type="button"
@@ -86,7 +91,7 @@
             disabled={isLoading}
             aria-label={`Roll d${sides} with count ${selectedCounts[sides]}`}
           >
-            {selectedCounts[sides]}
+            {sides}
           </button>
           <select
             value={selectedCounts[sides]}
@@ -103,7 +108,6 @@
     {/each}
 
     <label class="d100-control">
-      <span class="dice-icon-spacer" aria-hidden="true"></span>
       <button
         type="button"
         on:click={handleD100Click}
@@ -124,11 +128,22 @@
       <h2>
         {lastRollLabel}{#if lastRollCount > 1}{' '}(Total: {lastRollTotal}){/if}
       </h2>
-      <ul>
-        {#each results as roll, index}
-          <li>#{index + 1}: {roll}</li>
-        {/each}
-      </ul>
+      <table class="results-table">
+        <tbody>
+          {#each Array(resultRows) as _, rowIdx}
+            <tr>
+              {#each Array(resultCols) as _, colIdx}
+                {@const resultIdx = rowIdx * resultCols + colIdx}
+                <td>
+                  {#if resultIdx < results.length}
+                    {results[resultIdx]}
+                  {/if}
+                </td>
+              {/each}
+            </tr>
+          {/each}
+        </tbody>
+      </table>
     </section>
   {/if}
 </main>
@@ -170,18 +185,6 @@
     gap: 0.25rem;
     font-weight: 600;
     align-items: flex-start;
-  }
-
-  label .dice-icon {
-    width: 1.5rem;
-    height: 1.5rem;
-    display: block;
-  }
-
-  .d100-control .dice-icon-spacer {
-    width: 1.5rem;
-    height: 1.5rem;
-    display: block;
   }
 
   select,
@@ -240,8 +243,8 @@
   }
 
   .split-control select {
-    width: 2.25rem;
-    min-width: 2.25rem;
+    width: 1.5rem;
+    min-width: 1.5rem;
     padding-left: 0.2rem;
     padding-right: 0.2rem;
     appearance: none;
@@ -276,9 +279,24 @@
     border-top: 1px solid #334155;
   }
 
-  ul {
-    margin: 0;
-    padding-left: 1.25rem;
+  .results-table {
+    width: auto;
+    border-collapse: collapse;
+    margin: 0.75rem 0;
+  }
+
+  .results-table td {
+    width: 2.75rem;
+    height: 2.75rem;
+    text-align: center;
+    vertical-align: middle;
+    padding: 0;
+    border: 1px solid #334155;
+    font-weight: 600;
+  }
+
+  .results-table td:empty {
+    border: 1px solid transparent;
   }
 
   p {
