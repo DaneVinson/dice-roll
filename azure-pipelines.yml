@@ -4,6 +4,13 @@ trigger:
 pr:
 - main
 
+variables:
+  buildConfiguration: Debug
+  azureServiceConnection: your-service-connection-name
+  webAppName: your-web-app-name
+  webAppKind: webApp
+  deployEnvironment: dice-roll-dev
+
 pool:
   vmImage: ubuntu-latest
 
@@ -30,7 +37,7 @@ stages:
     - script: dotnet restore DiceRoller.slnx
       displayName: Restore solution
 
-    - script: dotnet test Dice.Api.Tests/Dice.Api.Tests.fsproj --configuration Release --logger "console;verbosity=normal"
+    - script: dotnet test Dice.Api.Tests/Dice.Api.Tests.fsproj --configuration $(buildConfiguration) --logger "console;verbosity=normal"
       displayName: Run API tests
 
     - task: PowerShell@2
@@ -40,31 +47,43 @@ stages:
         filePath: scripts/build-client.ps1
         arguments: -RunUnitTests
 
-    - script: dotnet publish Dice.Api/Dice.Api.fsproj --configuration Release --output $(Build.ArtifactStagingDirectory)/api
+    - script: dotnet publish Dice.Api/Dice.Api.fsproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api
       displayName: Publish API
+
+    - task: ArchiveFiles@2
+      displayName: Archive deploy package
+      inputs:
+        rootFolderOrFile: $(Build.ArtifactStagingDirectory)/api
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/dice-api.zip
+        replaceExistingArchive: true
 
     - task: PublishPipelineArtifact@1
       displayName: Publish deploy artifact
       inputs:
-        targetPath: $(Build.ArtifactStagingDirectory)/api
+        targetPath: $(Build.ArtifactStagingDirectory)/dice-api.zip
         artifact: dice-api
 
-# - stage: Deploy
-#   displayName: Deploy
-#   dependsOn: Build
-#   condition: succeeded()
-#   jobs:
-#   - deployment: DeployToDev
-#     displayName: Deploy to dev environment
-#     environment: dice-roll-dev
-#     strategy:
-#       runOnce:
-#         deploy:
-#           steps:
-#           - download: current
-#             artifact: dice-api
-#
-#           - pwsh: |
-#               Write-Host "Artifact downloaded to $(Pipeline.Workspace)/dice-api"
-#               Get-ChildItem -Path "$(Pipeline.Workspace)/dice-api" -Recurse | Select-Object -First 20
-#             displayName: Verify downloaded artifact
+- stage: Deploy
+  displayName: Deploy
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployToAzureWebApp
+    displayName: Deploy to Azure Web App
+    environment: $(deployEnvironment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: dice-api
+
+          - task: AzureWebApp@1
+            displayName: Deploy package to Azure Web App
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              appType: $(webAppKind)
+              appName: $(webAppName)
+              package: $(Pipeline.Workspace)/dice-api/dice-api.zip
