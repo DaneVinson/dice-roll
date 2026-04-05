@@ -7,9 +7,6 @@ appsettings.Development.json
 .runsettings
 *[Pp]laylist.cs
 
-# Copilot files
-.github
-
 # Dev VM Files
 devVM/
 .vssbe

@@ -21,6 +21,7 @@
   let lastRollCount = 0;
   let lastRollSides = 0;
   let results: number[] = [];
+  let liveLog: string[] = [];
   let isLoading = false;
   let error = '';
 
@@ -29,6 +30,22 @@
   $: lastRollTotal = results.reduce((sum, value) => sum + value, 0);
   $: resultCols = Math.min(Math.ceil(Math.sqrt(results.length)), 10) || 1;
   $: resultRows = Math.ceil(results.length / resultCols);
+
+  function formatTime(date: Date) {
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    const second = String(date.getSeconds()).padStart(2, '0');
+
+    return `${hour}:${minute}:${second}`;
+  }
+
+  function formatResultLabel(count: number, sides: number) {
+    if (sides === 100) {
+      return 'd%';
+    }
+
+    return `${count}d${sides}`;
+  }
 
   async function rollForSides(count: number, sides: number) {
     if (isLoading) {
@@ -39,9 +56,15 @@
     error = '';
 
     try {
-      results = await rollDice(count, sides);
+      const fetchedResults = await rollDice(count, sides);
+      const timeText = formatTime(new Date());
+      const resultText = formatResultLabel(count, sides);
+      const valueText = `[${fetchedResults.join(', ')}]`;
+
+      results = fetchedResults;
       lastRollCount = count;
       lastRollSides = sides;
+      liveLog = [`${timeText} ${resultText} ${valueText}`, ...liveLog];
       selectedCounts = {
         ...selectedCounts,
         [sides]: 1
@@ -144,6 +167,16 @@
           {/each}
         </tbody>
       </table>
+    </section>
+  {/if}
+
+  {#if liveLog.length > 0}
+    <section>
+      <ul class="live-log-list">
+        {#each liveLog as entry}
+          <li>{entry}</li>
+        {/each}
+      </ul>
     </section>
   {/if}
 </main>
@@ -297,6 +330,20 @@
 
   .results-table td:empty {
     border: 1px solid transparent;
+  }
+
+  .live-log-list {
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.95rem;
+  }
+
+  .live-log-list li {
+    padding: 0.2rem 0;
+    white-space: nowrap;
+    overflow-x: auto;
   }
 
   p {
