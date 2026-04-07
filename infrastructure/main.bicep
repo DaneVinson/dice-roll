@@ -4,16 +4,16 @@ targetScope = 'resourceGroup'
 param location string = resourceGroup().location
 
 @description('Name of the App Service plan.')
-param appServicePlanName string = 'y-a-dice-roller-plan'
+param appServicePlanName string
 
 @description('Name of the Azure Web App.')
-param webAppName string = 'y-a-dice-roller'
+param webAppName string
 
 @description('SKU name for the App Service plan.')
-param appServicePlanSkuName string = 'F1'
+param appServicePlanSkuName string
 
 @description('SKU tier for the App Service plan.')
-param appServicePlanSkuTier string = 'Free'
+param appServicePlanSkuTier string
 
 @description('Whether Always On should be enabled for the web app.')
 param alwaysOn bool = false

@@ -6,10 +6,12 @@ pr:
 
 variables:
   buildConfiguration: Debug
-  azureServiceConnection: your-service-connection-name
+  azureServiceConnection: DiceRoller
   webAppName: your-web-app-name
   webAppKind: webApp
   deployEnvironment: dice-roll-dev
+  resourceGroupName: DiceRoller
+  resourceGroupLocation: westus2
 
 pool:
   vmImage: ubuntu-latest
@@ -79,6 +81,29 @@ stages:
           steps:
           - download: current
             artifact: dice-api
+
+          - task: AzureCLI@2
+            displayName: Create resource group
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az group create \
+                  --name $(resourceGroupName) \
+                  --location $(resourceGroupLocation)
+
+          - task: AzureCLI@2
+            displayName: Deploy Bicep template
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az deployment group create \
+                  --resource-group $(resourceGroupName) \
+                  --template-file infrastructure/main.bicep \
+                  --parameters infrastructure/dev.bicepparam
 
           - task: AzureWebApp@1
             displayName: Deploy package to Azure Web App

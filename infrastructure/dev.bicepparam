@@ -1,12 +1,12 @@
 using './main.bicep'
 
-param appServicePlanName = 'dice-roll-plan-dev'
-param webAppName = 'dice-roll-web-dev'
-param appServicePlanSkuName = 'B1'
-param appServicePlanSkuTier = 'Basic'
-param alwaysOn = true
+param appServicePlanName = 'yadr-plane'
+param webAppName = 'yadr'
+param appServicePlanSkuName = 'F1'
+param appServicePlanSkuTier = 'Free'
+param alwaysOn = false
 param appSettings = {
-  ASPNETCORE_ENVIRONMENT: 'Production'
+  ASPNETCORE_ENVIRONMENT: 'Debug'
   WEBSITE_RUN_FROM_PACKAGE: '1'
 }
 param tags = {
