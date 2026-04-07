@@ -91,20 +91,26 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
-                echo "Active account context"
+                echo "=== Active account context ==="
                 az account show --output table
 
-                echo "App Service plans in target resource group"
-                az appservice plan list \
-                  --resource-group $(resourceGroupName) \
-                  --query "[].{name:name,sku:sku.name,tier:sku.tier,location:location,status:status}" \
-                  --output table || true
+                echo ""
+                echo "=== Subscription offer type ==="
+                az account show --query "{'Subscription':name,'OfferID':id}" --output table
 
-                echo "Regional App Service usage and limits"
+                echo ""
+                echo "=== All available Free tier locations ==="
+                az appservice list-locations \
+                  --sku FREE \
+                  --output json
+
+                echo ""
+                echo "=== Target region availability ==="
+                echo "Checking $(resourceGroupLocation)..."
                 az appservice list-locations \
                   --sku FREE \
                   --query "[?name=='$(resourceGroupLocation)']" \
-                  --output json || true
+                  --output json || echo "Not found in Free tier"
 
           - task: AzureCLI@2
             displayName: Create resource group
