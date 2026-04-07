@@ -85,6 +85,28 @@ stages:
             artifact: dice-api
 
           - task: AzureCLI@2
+            displayName: Diagnose subscription and App Service usage
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "Active account context"
+                az account show --output table
+
+                echo "App Service plans in target resource group"
+                az appservice plan list \
+                  --resource-group $(resourceGroupName) \
+                  --query "[].{name:name,sku:sku.name,tier:sku.tier,location:location,status:status}" \
+                  --output table || true
+
+                echo "Regional App Service usage and limits"
+                az appservice list-locations \
+                  --sku FREE \
+                  --query "[?name=='$(resourceGroupLocation)']" \
+                  --output json || true
+
+          - task: AzureCLI@2
             displayName: Create resource group
             inputs:
               azureSubscription: $(azureServiceConnection)
