@@ -1,6 +1,6 @@
 using './main.bicep'
 
-param appServicePlanName = 'yadr-plane'
+param appServicePlanName = 'yadr-plan'
 param webAppName = 'yadr'
 param appServicePlanSkuName = 'F1'
 param appServicePlanSkuTier = 'Free'
