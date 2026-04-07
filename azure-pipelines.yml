@@ -11,7 +11,7 @@ variables:
   webAppKind: webApp
   deployEnvironment: dice-roll-dev
   resourceGroupName: DiceRoller
-  resourceGroupLocation: westus2
+  resourceGroupLocation: westus
 
 pool:
   vmImage: ubuntu-latest
