@@ -7,11 +7,11 @@ pr:
 variables:
   buildConfiguration: Debug
   azureServiceConnection: DiceRoller
-  webAppName: your-web-app-name
+  webAppName: yadr
   webAppKind: webApp
   deployEnvironment: dice-roll-dev
   resourceGroupName: DiceRoller
-  resourceGroupLocation: westus
+  resourceGroupLocation: westus3
 
 pool:
   vmImage: ubuntu-latest
@@ -83,34 +83,6 @@ stages:
 
           - download: current
             artifact: dice-api
-
-          - task: AzureCLI@2
-            displayName: Diagnose subscription and App Service usage
-            inputs:
-              azureSubscription: $(azureServiceConnection)
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                echo "=== Active account context ==="
-                az account show --output table
-
-                echo ""
-                echo "=== Subscription offer type ==="
-                az account show --query "{'Subscription':name,'OfferID':id}" --output table
-
-                echo ""
-                echo "=== All available Free tier locations ==="
-                az appservice list-locations \
-                  --sku FREE \
-                  --output json
-
-                echo ""
-                echo "=== Target region availability ==="
-                echo "Checking $(resourceGroupLocation)..."
-                az appservice list-locations \
-                  --sku FREE \
-                  --query "[?name=='$(resourceGroupLocation)']" \
-                  --output json || echo "Not found in Free tier"
 
           - task: AzureCLI@2
             displayName: Create resource group
